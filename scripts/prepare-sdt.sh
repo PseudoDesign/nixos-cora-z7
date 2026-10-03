@@ -2,27 +2,31 @@
 set -euo pipefail
 
 repo_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
-xsa="$repo_dir/hardware/cora-z7-07s.xsa"
 board="$repo_dir/hardware/cora-z7-07s.dtsi"
 output="$repo_dir/hardware/sdt"
 
-if [[ $# -gt 0 ]]; then
-  echo "Usage: $0 (uses the bundled hardware/cora-z7-07s.xsa)" >&2
+if [[ $# -ne 1 ]]; then
+  echo "Usage: $0 <Vivado-2026.1-export.xsa> (export with bitstream included)" >&2
   exit 2
 fi
+xsa=$(realpath -- "$1")
 command -v python3 >/dev/null || { echo "python3 is required." >&2; exit 1; }
-command -v xsct >/dev/null || {
-  echo "Source your Vitis 2024.1 settings64.sh first; xsct is not on PATH." >&2
+command -v sdtgen >/dev/null || {
+  echo "Source your Vivado 2026.1 settings64.sh first; sdtgen is not on PATH." >&2
   exit 1
 }
+if [[ -n ${CUSTOM_SDT_REPO:-} ]]; then
+  echo "Unset CUSTOM_SDT_REPO to use the SDT repository shipped with Vivado 2026.1." >&2
+  exit 1
+fi
 python3 "$repo_dir/scripts/inspect_xsa.py" "$xsa"
 
 # Do not replace the previous handoff unless generation and validation succeed.
 work=$(mktemp -d "$repo_dir/hardware/.sdt-XXXXXX")
 trap 'rm -rf -- "$work"' EXIT
-xsct "$repo_dir/scripts/generate-sdt.tcl" "$xsa" "$work/generated" "$board"
+sdtgen "$repo_dir/scripts/generate-sdt.tcl" "$xsa" "$work/generated" "$board"
 python3 "$repo_dir/scripts/record-handoff.py" "$work/generated" "$xsa" "$board"
-python3 "$repo_dir/scripts/check-handoff.py" "$work/generated" "$xsa" "$board"
+python3 "$repo_dir/scripts/check-handoff.py" "$work/generated" "$board"
 
 mkdir -p "$output"
 # Only previously generated files are replaced. Preserve the tracked README.

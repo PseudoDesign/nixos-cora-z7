@@ -4,7 +4,7 @@ let
   sdt = native.runCommand "cora-z7-07s-sdt" {
     nativeBuildInputs = [ native.python3 ];
   } ''
-    python3 ${../scripts/check-handoff.py} ${../hardware/sdt} ${../hardware/cora-z7-07s.xsa} ${../hardware/cora-z7-07s.dtsi}
+    python3 ${../scripts/check-handoff.py} ${../hardware/sdt} ${../hardware/cora-z7-07s.dtsi}
     mkdir -p "$out"
     cp -r ${../hardware/sdt}/. "$out/"
   '';
@@ -17,11 +17,11 @@ in {
 
   hardware.zynq = {
     platform = "zynq";
-    xlnxVersion = "2024.1";
+    xlnxVersion = "2026.1";
     sdtDir = sdt;
     dtb = linuxDtb;
     # dtDir is deliberately unused: dtb above is generated from the SDT.
-    bitstream = "${sdt}/cora-z7-wrapper.bit";
+    bitstream = "${sdt}/system.bit";
   };
 
   boot.loader = {

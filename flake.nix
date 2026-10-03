@@ -13,7 +13,8 @@
       forBuilders = lib.genAttrs builders;
       mkSystem = buildPlatform: lib.nixosSystem {
         modules = [
-          nixos-xlnx.nixosModules.sd-image
+          ./modules/sd-image.nix
+          self.nixosModules.xlnx-2026-1
           self.nixosModules.cora-z7-07s
           ./configuration.nix
           { nixpkgs.buildPlatform = buildPlatform; }
@@ -22,10 +23,12 @@
       crossSystems = forBuilders mkSystem;
       toolsFor = system: import nixpkgs {
         inherit system;
-        overlays = [ nixos-xlnx.overlays.xlnx2024_1 ];
+        overlays = [ (import ./pkgs/overlay.nix { upstream = nixos-xlnx; }) ];
       };
     in {
       nixosModules.cora-z7-07s = import ./modules/cora-z7-07s.nix;
+      nixosModules.xlnx-2026-1 = import ./modules/xlnx-2026-1.nix { upstream = nixos-xlnx; };
+      overlays.default = import ./pkgs/overlay.nix { upstream = nixos-xlnx; };
       # Default is a genuine x86_64 -> ARMv7 cross build.
       nixosConfigurations.cora-z7-07s = crossSystems.x86_64-linux;
       nixosConfigurations.cora-z7-07s-aarch64-builder = crossSystems.aarch64-linux;
@@ -51,10 +54,10 @@
           default = pkgs.mkShell {
             packages = [
               pkgs.python3 pkgs.dtc pkgs.git pkgs.nixfmt-rfc-style
-              pkgs.xilinx-bootgen_2024_1
+              pkgs.xilinx-bootgen_2026_1
             ];
             shellHook = ''
-              echo "Prepare the hardware handoff with ./scripts/prepare-sdt.sh (Vitis/XSCT 2024.1 required)."
+              echo "Source Vivado 2026.1 settings64.sh, then ./scripts/prepare-sdt.sh /path/to/export.xsa"
               echo "Build the image with: nix build .#sdImage -L"
             '';
           };

@@ -12,7 +12,7 @@ be tested. No bootable binary release is provided yet.
 
 ```mermaid
 flowchart TD
-    X["Vivado 2024.1 XSA"] --> S["SDTGen 2024.1 handoff"]
+    X["Vivado 2026.1 XSA"] --> S["Standalone SDTGen 2026.1 handoff"]
     S --> F["SDT-based FSBL"]
     S --> D["Lopper Linux DTB"]
     S --> P["Bitstream"]
@@ -26,39 +26,62 @@ flowchart TD
 ```
 
 The SDT is used for both the FSBL and the Linux device tree. This project does
-not call the legacy `device-tree-xlnx` generator. The Linux DTB is explicitly
-supplied to the upstream NixOS Zynq module, replacing its legacy-tree default.
-AMD tooling is needed for the XSA-to-SDT step; the subsequent build uses Nix.
+not call the legacy `device-tree-xlnx` generator. Lopper derives the Linux DTB,
+which is explicitly supplied to the NixOS board module.
+Vivado 2026.1 supplies standalone `sdtgen` for the XSA-to-SDT step. **Vitis is
+not required.** The subsequent build uses Nix, including the open-source AMD
+FSBL build tools and native Bootgen.
 
-Pinned initial versions:
+Pinned versions:
 
 | Component | Version |
 |---|---|
-| Bundled hardware export | Vivado 2024.1, `xc7z007sclg400-1` |
-| SDT generator / XSCT | 2024.1 |
-| AMD firmware, kernel and U-Boot integration | `nixos-xlnx` 2024.1 set |
+| Required hardware export | Vivado 2026.1, `xc7z007sclg400-1`, with bitstream |
+| SDT generator | Standalone `sdtgen` from Vivado 2026.1 |
+| FSBL / libmetal / Bootgen | AMD 2026.1 release commits |
+| Lopper | AMD 2026.1 release, 1.3.2 |
+| Linux | AMD 2026.1 LTS recipe pin, 6.18.10 |
+| U-Boot | AMD 2026.1 recipe pin, 2026.01 |
 | NixOS | 25.11, exact inputs in `flake.lock` |
 
-The bundled XSA is copied unchanged from
+Exact AMD revisions and verified unpacked source hashes are in
+`pkgs/sources.nix`. The local release module/overlay extends `nixos-xlnx`'s
+BOOT.BIN and SD-image support to 2026.1; its upstream release enum currently
+stops at 2025.1. No old-release FSBL recipe is used.
+
+The bundled **reference XSA is from 2024.1** and is copied unchanged from
 [meta-pseudo-design at f94be4054df3](https://github.com/PseudoDesign/meta-pseudo-design/blob/f94be4054df3356cba288fa8af978a8321a0a322/meta-pd-xilinx/recipes-bsp/hdf/files/cora-z7.xsa).
 It contains `cora-z7-wrapper.bit` and the PS7 initialization files. Its SHA-256
 is `5c85b95f291576c8e011ad972145478d2f325502dd41b88c99ad3d423405ee40`.
 The exported design's HWH contains the processing-system block and no separate
-PL peripheral IP. The bitstream is nevertheless included in `BOOT.BIN`.
+PL peripheral IP. Keep this export as a baseline; it is not accepted by the
+2026.1 preparation script. Re-export the design with your new Vivado install.
 
 ## Prepare the SDT once
 
-Clone the repository on a Linux workstation with Nix and AMD Vitis 2024.1:
+Clone the repository on a Linux workstation with Nix and AMD Vivado 2026.1:
 
 ```bash
 git clone https://github.com/PseudoDesign/nixos-cora-z7.git
 cd nixos-cora-z7
 
-# Substitute your actual Vitis installation directory.
-source /path/to/Xilinx/Vitis/2024.1/settings64.sh
-./scripts/prepare-sdt.sh
+# Substitute your actual Vivado installation directory.
+source /path/to/AMD/Vivado/2026.1/settings64.sh
+./scripts/prepare-sdt.sh /path/to/cora-z7-07s.xsa
 git add hardware/sdt
 ```
+
+Generate the bitstream in Vivado, then export hardware with **Include
+bitstream** enabled. The equivalent Tcl command in your open project is:
+
+```tcl
+write_hw_platform -fixed -include_bit -force -file /path/to/cora-z7-07s.xsa
+```
+
+The export must use the Cora Z7-07S part and preserve UART0, SD0, GEM0 and USB0
+MIO wiring and 512 MiB DDR. The wrapper accepts any single exported `.bit`
+filename. `CUSTOM_SDT_REPO` must be unset so generation uses the repository
+shipped with your Vivado installation.
 
 `python3` must be available. `nix develop` supplies Python and native inspection
 tools if needed; AMD tools must be installed separately. The wrapper adds the
@@ -66,9 +89,12 @@ board include last, after SDTGen finishes, so generated properties cannot
 override the 07S corrections. This also avoids release-specific custom-include
 option differences in SDTGen.
 
-The script verifies the bundled XSA part and version, generates the real SDT,
+The script verifies your XSA part and version, generates the real SDT,
 includes `hardware/cora-z7-07s.dtsi`, and records source/output hashes in
-`hardware/sdt/handoff.json`. Builds reject a missing or stale handoff.
+`hardware/sdt/handoff.json`. It copies the input XSA into the handoff as
+`hardware.xsa` and the exported bitstream as `system.bit`, so the build does
+not depend on the original Vivado project path. Builds reject a missing or
+modified handoff, or a changed board DTSI.
 The generated directory is intentionally empty in the initial repository
 except for its README: AMD tools were unavailable during implementation.
 
@@ -114,7 +140,7 @@ The uncompressed image is under `result/sd-image/*.img`. It contains:
 
 | Partition | Contents |
 |---|---|
-| 1, FAT (128 MiB) | `BOOT.BIN`: SDT FSBL, bundled bitstream, U-Boot, control DTB |
+| 1, FAT (128 MiB) | `BOOT.BIN`: SDT FSBL, exported bitstream, U-Boot, control DTB |
 | 2, ext4 | NixOS store/root, kernel/initrd/DTB and `/boot/extlinux/extlinux.conf` |
 
 Write the image using your usual image writer, selecting the intended SD card.
@@ -158,7 +184,8 @@ does not remove the second core from AMD's generic Zynq description.
 Boot-critical SD, ext4 and console drivers, plus MACB and the Realtek PHY driver,
 are built into the kernel. The initrd uses gzip and a small shell-based stage1.
 There is no desktop and no Mender integration in this cut. The old project's
-generic UIO boot argument is omitted because this XSA has no PL peripheral IP.
+generic UIO boot argument is omitted. If your new XSA adds PL peripherals, add
+their Linux drivers and any required access configuration.
 
 The Cora has no MAC-address EEPROM. Its sticker contains the assigned address;
 configure it during later network integration. Do not assume the first-boot
@@ -172,11 +199,14 @@ Yocto SD card or an image backup for recovery during bring-up.
 ## Licenses and references
 
 Original repository code is MIT. The upstream modules are referenced as a
-pinned flake input, and retain their MIT license. Linux, U-Boot, AMD firmware
+pinned flake input, and retain their MIT license. The local release adapter
+and FSBL recipe are adapted from that project; its notice is preserved in
+`COPYING.nixos-xlnx`. Linux, U-Boot, AMD firmware
 and generated device-tree sources retain their individual upstream licenses;
 the repository license does not replace the licenses of image contents.
 
 - [nixos-xlnx](https://github.com/chuangzhu/nixos-xlnx)
-- [AMD SDTGen 2024.1](https://github.com/Xilinx/system-device-tree-xlnx/tree/xlnx_rel_v2024.1)
-- [Lopper Linux domain conversion](https://github.com/devicetree-org/lopper/blob/f93c309fd206525216d7a57eee010d698391efcf/lopper/assists/gen_domain_dts.py)
+- [AMD SDTGen 2026.1](https://github.com/Xilinx/system-device-tree-xlnx/tree/af0bf525f0b466b6266cfd92ef6fccd92ebed84e)
+- [AMD Linux 2026.1 recipe](https://github.com/Xilinx/meta-xilinx/blob/rel-v2026.1/meta-xilinx-core/recipes-kernel/linux/linux-xlnx_6.18.10-v2026.1.bb)
+- [Lopper Linux domain conversion](https://github.com/Xilinx/lopper/blob/05dc7e4bf359b60f1e6f7ed7074740afd7955a63/lopper/assists/gen_domain_dts.py)
 - [Original Yocto Cora configuration](https://github.com/PseudoDesign/meta-pseudo-design/tree/scarthgap/meta-pd-xilinx)
