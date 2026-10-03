@@ -58,7 +58,27 @@ Its SHA-256 is
 It is retained for reference and is not a build input. No fabricated hardware
 release is included; export your implemented design using Vivado 2026.1.
 
-## Export one hardware release from Vivado
+## Create the hardware project from scratch
+
+The repository now includes a Tcl-created Cora Z7-07S design and pinned
+Digilent board definitions. On the Vivado 2026.1 hardware workstation:
+
+```bash
+source /path/to/Vivado/2026.1/settings64.sh
+./scripts/hardware.sh create
+./scripts/hardware.sh gui
+# After inspection, build a fresh project from the tracked Tcl:
+./scripts/hardware.sh build
+```
+
+The release is written to `build/release/cora-z7-07s-hardware.tar.gz`.
+Projects and logs stay under the ignored `build/` directory. Existing project
+directories are preserved; choose a new directory for another clean build.
+See [the hardware workflow](hw/README.md) for saving GUI edits back to Tcl,
+adding HDL/constraints, and verifying reconstruction from a clean checkout.
+Actual Vivado execution and board boot still need testing.
+
+## Export one hardware release from an existing Vivado project
 
 Complete implementation and generate the bitstream for the Cora Z7-07S.
 Keep the design's UART0, SD0, GEM0 and USB0 MIO wiring and 512 MiB DDR.
