@@ -47,6 +47,8 @@
           linux-dtb = cfg.hardware.zynq.dtb;
           sdt = cfg.hardware.zynq.sdtDir;
           kernel = cfg.boot.kernelPackages.kernel;
+          security-capabilities = native.writeText "zynq-security-capabilities.json"
+            (builtins.readFile ./security/capabilities.json);
         });
 
       devShells = forBuilders (system:

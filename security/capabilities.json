@@ -1,0 +1,31 @@
+{
+  "format": "zynq-platform-security-capabilities",
+  "schema": "0.1.0-draft.1",
+  "record_kind": "source_implementation_status",
+  "device_family": "zynq-7000",
+  "board": "digilent-cora-z7-07s",
+  "part": "xc7z007sclg400-1",
+  "architecture": "armv7l-linux",
+  "default_image": "development",
+  "physical_qualification": "not_performed",
+  "capabilities": {
+    "hardware_release_import": "implemented",
+    "rom_anchored_boot_authentication": "planned",
+    "boot_partition_encryption": "planned",
+    "required_signed_fit_boot": "planned",
+    "verified_system_root": "planned",
+    "device_bound_offline_storage_unlock": "feasibility_required",
+    "authenticated_update_and_recovery": "planned",
+    "debug_lockdown": "planned",
+    "efuse_inspection_and_provisioning": "planned",
+    "isolated_operational_key_service": "research",
+    "remote_boot_attestation": "not_implemented",
+    "hardware_rollback_protection": "not_implemented"
+  },
+  "limitations": [
+    "This record describes source implementation status, not observations of a device.",
+    "Implemented artifact hashing is not signature verification or secure boot.",
+    "No security guarantee or fleet admission follows from this record.",
+    "All boot, storage, debug and recovery claims require separate physical qualification."
+  ]
+}

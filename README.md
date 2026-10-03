@@ -11,6 +11,13 @@ is provided yet.
 
 ## Hardware and software boundary
 
+The [generic Zynq security foundation](security/README.md) defines the planned
+authenticated-boot, protected-storage and explicit hardware-operation interfaces.
+Kaiba-specific provisioning/enrollment stays downstream; Raspberry Pi remains
+Kaiba's first production target. The current image remains a development image.
+`nix build .#security-capabilities` exports source implementation status, not
+device evidence or a secure-boot claim.
+
 Vivado 2026.1 exports the hardware release. The Nix builder consumes that
 release and does not need Vivado, Vitis, or an externally installed AMD tool.
 
