@@ -15,8 +15,7 @@ def check(directory, board):
     manifest = directory / "handoff.json"
     if not manifest.is_file():
         raise ValueError(
-            "Missing SDT handoff. Source Vivado 2026.1 settings64.sh, run "
-            "./scripts/prepare-sdt.sh /path/to/export.xsa, then git add hardware/sdt."
+            "Missing derived SDT handoff. Build .#sdt from the configured hardware release."
         )
     data = json.loads(manifest.read_text())
     if (data.get("schema") != 2
@@ -26,7 +25,7 @@ def check(directory, board):
     if data.get("part") != "xc7z007sclg400-1":
         raise ValueError("Handoff is not for the Cora Z7-07S")
     if data["xsa_sha256"] != digest(directory / "hardware.xsa") or data["board_sha256"] != digest(board):
-        raise ValueError("XSA or board DTSI changed: regenerate with ./scripts/prepare-sdt.sh")
+        raise ValueError("Derived XSA or board DTSI hash mismatch; rebuild .#sdt")
     required = ["system-top.dts", "ps7_init.c", "ps7_init.h", "system.bit",
                 "hardware.xsa", "sdtgen-version.txt", board.name]
     for name in required:

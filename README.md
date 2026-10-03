@@ -4,40 +4,41 @@ Initial NixOS board support for the **Digilent Cora Z7-07S** (XC7Z007S,
 one Cortex-A9, 512 MiB RAM). The default image cross-compiles from x86-64 Linux
 to `armv7l-linux`. An AArch64 Linux builder is also exposed.
 
-This is an initial bring-up cut. The Nix configuration is evaluated before
-publication, but a complete image build and physical board boot still need to
-be tested. No bootable binary release is provided yet.
+This is an initial bring-up cut. Nix configuration evaluation and release
+export/import checks with fixtures pass. A real Vivado export, complete image
+build and physical board boot still need testing. No bootable binary release
+is provided yet.
 
 ## Hardware and software boundary
 
+Vivado 2026.1 exports the hardware release. The Nix builder consumes that
+release and does not need Vivado, Vitis, or an externally installed AMD tool.
+
 ```mermaid
 flowchart TD
-    X["Vivado 2026.1 XSA"] --> S["Standalone SDTGen 2026.1 handoff"]
-    S --> F["SDT-based FSBL"]
+    V["Implemented Vivado design"] --> R["Hardware release archive: SDT, XSA, bitstream, PS7 init"]
+    R --> S["Nix: import SDT and apply Cora corrections"]
+    S --> F["Build FSBL from source"]
     S --> D["Lopper Linux DTB"]
-    S --> P["Bitstream"]
-    F --> B["BOOT.BIN"]
-    P --> B
-    U["U-Boot"] --> B
+    R --> B["BOOT.BIN"]
+    F --> B
     D --> B
-    B --> I["SD image"]
-    N["NixOS kernel, initrd and closure"] --> I
-    D --> I
+    U["Nix-built U-Boot"] --> B
+    B --> I["NixOS SD image"]
+    N["Kernel, initrd and NixOS closure"] --> I
 ```
 
-The SDT is used for both the FSBL and the Linux device tree. This project does
-not call the legacy `device-tree-xlnx` generator. Lopper derives the Linux DTB,
-which is explicitly supplied to the NixOS board module.
-Vivado 2026.1 supplies standalone `sdtgen` for the XSA-to-SDT step. **Vitis is
-not required.** The subsequent build uses Nix, including the open-source AMD
-FSBL build tools and native Bootgen.
+AMD's documented hardware export is XSA followed by standalone `sdtgen`.
+For Zynq, SDTGen produces the SDT and copies the PS7 init files and bitstream
+from the XSA. The repository wraps those steps into one Vivado Tcl export
+command and packages all inputs into a single `.tar.gz` release. FSBL, U-Boot
+and Linux binaries are built by Nix rather than exported from Vivado.
 
 Pinned versions:
 
 | Component | Version |
 |---|---|
-| Required hardware export | Vivado 2026.1, `xc7z007sclg400-1`, with bitstream |
-| SDT generator | Standalone `sdtgen` from Vivado 2026.1 |
+| Hardware release | Vivado / SDTGen 2026.1, `xc7z007sclg400-1` |
 | FSBL / libmetal / Bootgen | AMD 2026.1 release commits |
 | Lopper | AMD 2026.1 release, 1.3.2 |
 | Linux | AMD 2026.1 LTS recipe pin, 6.18.10 |
@@ -46,62 +47,77 @@ Pinned versions:
 
 Exact AMD revisions and verified unpacked source hashes are in
 `pkgs/sources.nix`. The local release module/overlay extends `nixos-xlnx`'s
-BOOT.BIN and SD-image support to 2026.1; its upstream release enum currently
-stops at 2025.1. No old-release FSBL recipe is used.
+BOOT.BIN support to 2026.1; its upstream release enum currently stops at
+2025.1. The Linux DTB is derived with Lopper; the legacy
+`device-tree-xlnx` generator is not used.
 
 The bundled **reference XSA is from 2024.1** and is copied unchanged from
 [meta-pseudo-design at f94be4054df3](https://github.com/PseudoDesign/meta-pseudo-design/blob/f94be4054df3356cba288fa8af978a8321a0a322/meta-pd-xilinx/recipes-bsp/hdf/files/cora-z7.xsa).
-It contains `cora-z7-wrapper.bit` and the PS7 initialization files. Its SHA-256
-is `5c85b95f291576c8e011ad972145478d2f325502dd41b88c99ad3d423405ee40`.
-The exported design's HWH contains the processing-system block and no separate
-PL peripheral IP. Keep this export as a baseline; it is not accepted by the
-2026.1 preparation script. Re-export the design with your new Vivado install.
+Its SHA-256 is
+`5c85b95f291576c8e011ad972145478d2f325502dd41b88c99ad3d423405ee40`.
+It is retained for reference and is not a build input. No fabricated hardware
+release is included; export your implemented design using Vivado 2026.1.
 
-## Prepare the SDT once
+## Export one hardware release from Vivado
 
-Clone the repository on a Linux workstation with Nix and AMD Vivado 2026.1:
-
-```bash
-git clone https://github.com/PseudoDesign/nixos-cora-z7.git
-cd nixos-cora-z7
-
-# Substitute your actual Vivado installation directory.
-source /path/to/AMD/Vivado/2026.1/settings64.sh
-./scripts/prepare-sdt.sh /path/to/cora-z7-07s.xsa
-git add hardware/sdt
-```
-
-Generate the bitstream in Vivado, then export hardware with **Include
-bitstream** enabled. The equivalent Tcl command in your open project is:
+Complete implementation and generate the bitstream for the Cora Z7-07S.
+Keep the design's UART0, SD0, GEM0 and USB0 MIO wiring and 512 MiB DDR.
+With that project open, run in Vivado's Tcl console:
 
 ```tcl
-write_hw_platform -fixed -include_bit -force -file /path/to/cora-z7-07s.xsa
+source /path/to/nixos-cora-z7/scripts/export-hardware.tcl
+export_cora_release /path/to/cora-z7-07s-hardware.tar.gz
 ```
 
-The export must use the Cora Z7-07S part and preserve UART0, SD0, GEM0 and USB0
-MIO wiring and 512 MiB DDR. The wrapper accepts any single exported `.bit`
-filename. `CUSTOM_SDT_REPO` must be unset so generation uses the repository
-shipped with your Vivado installation.
+The optional second argument selects an implementation run other than
+`impl_1`. The exporter checks Vivado's release and the device part, opens the
+implementation run, exports an XSA with the bitstream included, runs the
+bundled `sdtgen`, and writes the hardware release atomically. Existing release
+files are replaced only after a successful export. `CUSTOM_SDT_REPO` must be
+unset to use the generator data shipped with your Vivado installation.
 
-`python3` must be available. `nix develop` supplies Python and native inspection
-tools if needed; AMD tools must be installed separately. The wrapper adds the
-board include last, after SDTGen finishes, so generated properties cannot
-override the 07S corrections. This also avoids release-specific custom-include
-option differences in SDTGen.
+Python 3 is needed on the **hardware design workstation** to package the
+release. If it is not already available, `nix develop` provides it; start
+Vivado from that shell. Vitis is not required. These tools are not needed on
+the NixOS image builder.
 
-The script verifies your XSA part and version, generates the real SDT,
-includes `hardware/cora-z7-07s.dtsi`, and records source/output hashes in
-`hardware/sdt/handoff.json`. It copies the input XSA into the handoff as
-`hardware.xsa` and the exported bitstream as `system.bit`, so the build does
-not depend on the original Vivado project path. Builds reject a missing or
-modified handoff, or a changed board DTSI.
-The generated directory is intentionally empty in the initial repository
-except for its README: AMD tools were unavailable during implementation.
+For an XSA already exported with its bitstream, the equivalent release command
+on the hardware workstation is:
 
-**Stage the generated files before building.** A Git-backed flake excludes
-untracked files, so running SDTGen without `git add hardware/sdt` is insufficient.
-After generation, the SDT directory can be committed and shared with builders
-that do not have AMD tools installed.
+```bash
+source /path/to/Vivado/2026.1/settings64.sh
+./scripts/prepare-sdt.sh /path/to/design.xsa /path/to/cora-z7-07s-hardware.tar.gz
+```
+
+The archive includes every raw SDT source/header, the PS7 init files,
+`hardware.xsa`, the exported bitstream (also normalized to `system.bit`), and
+`release.json` with the version and file hashes. It contains no prebuilt FSBL
+or Linux DTB. The archive bytes are reproducible for identical exported inputs;
+Vivado's own hardware generation may include timestamps.
+
+## Add the release to Nix
+
+Copy or download the release onto the image build machine:
+
+```bash
+cp /path/to/cora-z7-07s-hardware.tar.gz hardware/cora-z7-07s-hardware.tar.gz
+git add hardware/cora-z7-07s-hardware.tar.gz
+nix build .#sdImage -L
+```
+
+That is the complete software build workflow. No separate SDT preparation or
+AMD tools installation is needed on this machine. A Git-backed flake excludes
+untracked files, so stage the single release archive before building.
+
+The build checks the release's hashes, tool versions and device part, imports
+its sources, and appends the current `hardware/cora-z7-07s.dtsi` last. Board
+DTSI changes therefore rebuild the FSBL and Linux DTB without requiring another
+Vivado export. Changes to the Vivado design require a new hardware release.
+
+To use another artifact path, set
+`hardware.coraZ7.releasePackage = ./my-hardware-release.tar.gz;` in a NixOS
+module (for example `configuration.nix`). This option also accepts a
+hash-pinned Nix fetch derivation for releases stored elsewhere.
 
 ## Cross-compile
 
@@ -109,7 +125,10 @@ Add your public SSH key in `configuration.nix` if you want remote access.
 Then build on an x86-64 Linux workstation:
 
 ```bash
-# Check the smallest hardware-dependent output first.
+# Import and validate the hardware release first.
+nix build .#sdt -L --out-link result-sdt
+
+# Check the Linux device tree.
 nix build .#linux-dtb -L --out-link result-dtb
 
 # Build and package the firmware independently.
@@ -129,7 +148,7 @@ On an AArch64 Linux builder, `nix build .#sdImage -L` selects the AArch64-to-ARM
 cross build automatically. The explicit configuration is
 `cora-z7-07s-aarch64-builder`.
 
-Useful outputs: `.#kernel`, `.#fsbl`, `.#linux-dtb`, `.#boot-bin`, `.#sdImage`.
+Useful outputs: `.#sdt`, `.#kernel`, `.#fsbl`, `.#linux-dtb`, `.#boot-bin`, `.#sdImage`.
 An official ARMv7 binary cache is not available, so allow time and disk space
 for a substantial source build. Start with the committed lock file; an input
 upgrade is a separate change from the initial board bring-up.

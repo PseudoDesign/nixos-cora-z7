@@ -45,6 +45,7 @@
             cp ${cfg.hardware.zynq.fsbl} "$out"
           '';
           linux-dtb = cfg.hardware.zynq.dtb;
+          sdt = cfg.hardware.zynq.sdtDir;
           kernel = cfg.boot.kernelPackages.kernel;
         });
 
@@ -57,7 +58,8 @@
               pkgs.xilinx-bootgen_2026_1
             ];
             shellHook = ''
-              echo "Source Vivado 2026.1 settings64.sh, then ./scripts/prepare-sdt.sh /path/to/export.xsa"
+              echo "In Vivado: source scripts/export-hardware.tcl; export_cora_release /path/to/release.tar.gz"
+              echo "Copy the release to hardware/cora-z7-07s-hardware.tar.gz and git add that archive."
               echo "Build the image with: nix build .#sdImage -L"
             '';
           };

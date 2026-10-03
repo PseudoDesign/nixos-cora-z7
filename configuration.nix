@@ -1,5 +1,9 @@
 { lib, ... }:
 {
+  # Default hardware release: ./hardware/cora-z7-07s-hardware.tar.gz
+  # Override with another archive if needed:
+  # hardware.coraZ7.releasePackage = ./my-hardware-release.tar.gz;
+
   networking.hostName = "cora-z7-07s";
   networking.useDHCP = lib.mkDefault true;
 

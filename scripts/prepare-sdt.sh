@@ -2,11 +2,10 @@
 set -euo pipefail
 
 repo_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
-board="$repo_dir/hardware/cora-z7-07s.dtsi"
-output="$repo_dir/hardware/sdt"
+output=${2:-"$repo_dir/hardware/cora-z7-07s-hardware.tar.gz"}
 
-if [[ $# -ne 1 ]]; then
-  echo "Usage: $0 <Vivado-2026.1-export.xsa> (export with bitstream included)" >&2
+if [[ $# -lt 1 || $# -gt 2 ]]; then
+  echo "Usage: $0 <Vivado-2026.1-export.xsa> [output-release.tar.gz]" >&2
   exit 2
 fi
 xsa=$(realpath -- "$1")
@@ -22,15 +21,8 @@ fi
 python3 "$repo_dir/scripts/inspect_xsa.py" "$xsa"
 
 # Do not replace the previous handoff unless generation and validation succeed.
-work=$(mktemp -d "$repo_dir/hardware/.sdt-XXXXXX")
+work=$(mktemp -d)
 trap 'rm -rf -- "$work"' EXIT
-sdtgen "$repo_dir/scripts/generate-sdt.tcl" "$xsa" "$work/generated" "$board"
-python3 "$repo_dir/scripts/record-handoff.py" "$work/generated" "$xsa" "$board"
-python3 "$repo_dir/scripts/check-handoff.py" "$work/generated" "$board"
-
-mkdir -p "$output"
-# Only previously generated files are replaced. Preserve the tracked README.
-find "$output" -mindepth 1 -maxdepth 1 ! -name README.md -exec rm -rf -- {} +
-cp -R "$work/generated/." "$output/"
-echo "SDT prepared in $output"
-echo "Next: git add hardware/sdt && nix build .#sdImage -L"
+sdtgen "$repo_dir/scripts/generate-sdt.tcl" "$xsa" "$work/generated"
+python3 "$repo_dir/scripts/pack-hardware.py" "$work/generated" "$xsa" "$output"
+echo "Add the release archive to your flake and build: nix build .#sdImage -L"

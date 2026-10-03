@@ -18,7 +18,8 @@ if __name__ == "__main__":
     info = inspect(xsa)
     # Include the input XSA in the staged handoff, independent of the user's
     # Vivado project location and bitstream filename.
-    shutil.copyfile(xsa, directory / "hardware.xsa")
+    if xsa.resolve() != (directory / "hardware.xsa").resolve():
+        shutil.copyfile(xsa, directory / "hardware.xsa")
     with zipfile.ZipFile(xsa) as archive:
         (directory / "system.bit").write_bytes(archive.read(info["bitstream_member"]))
     info.update({"schema": 2,
