@@ -1,0 +1,63 @@
+// SPDX-License-Identifier: MIT
+// Board wiring carried forward from PseudoDesign/meta-pseudo-design.
+/ {
+    model = "Digilent Cora Z7-07S";
+    compatible = "digilent,zynq-coraz7", "xlnx,zynq-7000";
+
+    aliases {
+        serial0 = &uart0;
+        ethernet0 = &gem0;
+        mmc0 = &sdhci0;
+    };
+    chosen {
+        stdout-path = "serial0:115200n8";
+        // NixOS/extlinux supplies the generation's init= and boot arguments.
+        /delete-property/ bootargs;
+    };
+    usb_phy0: phy0@e0002000 {
+        compatible = "ulpi-phy";
+        #phy-cells = <0>;
+        reg = <0xe0002000 0x1000>;
+        view-port = <0x0170>;
+        drv-vbus;
+    };
+};
+
+// 07S has one CPU. Remove the second trace unit and both of its graph endpoints,
+// rather than redirecting the nonexistent unit to CPU0.
+&cpus_a9 {
+    /delete-node/ cpu@1;
+};
+&amba {
+    /delete-node/ ptm@f889d000;
+};
+&{/axi/funnel@f8804000/in-ports} {
+    /delete-node/ port@1;
+};
+&{/pmu@f8891000} {
+    interrupts = <0 5 4>;
+    reg = <0xf8891000 0x1000>;
+};
+
+&gem0 {
+    status = "okay";
+    phy-handle = <&ethernet_phy>;
+    // Keep the XSA's RGMII timing. The old working BSP did not assert PHY reset.
+    ethernet_phy: ethernet-phy@1 {
+        reg = <1>;
+    };
+};
+&usb0 {
+    status = "okay";
+    dr_mode = "host";
+    usb-phy = <&usb_phy0>;
+};
+&sdhci0 {
+    status = "okay";
+    disable-wp;
+    u-boot,dm-pre-reloc;
+};
+&uart0 {
+    status = "okay";
+    u-boot,dm-pre-reloc;
+};
