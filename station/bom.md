@@ -29,7 +29,7 @@ interfaces. See [hardware.md](hardware.md) before choosing harness parts.
 | 16 | 10 kOhm 0.1% resistors | Eight potential divider channels, one spare channel can remain unpopulated |
 | 5 | 10 kOhm pull-down resistors | Four relay inputs and sense-enable |
 | 8 each | 1 kOhm resistors, 1 nF capacitors, BAT54S clamp pairs | ADC input stages; spare included |
-| 8 | SOT-23 adapters, if using perfboard | For the clamp diode pairs |
+| 8 | SparkFun BOB-00717 SOT-23 to DIP adapters | One BAT54S per board; purchase quantity 10 includes two spare boards |
 | 2 + 1 | 100 nF ceramic capacitors + 10 uF capacitor | Analog-switch decoupling and carrier bulk capacitance |
 | 1 set | Barrel breakouts/pigtails, fuse holders and selected fuses | Cora uses center-positive 5.5 x 2.1 mm; confirm mating fit |
 | 1 set | Perfboard, keyed connectors, terminals and wire | 18–20 AWG power; smaller signal wire; strain relief and heat shrink |
@@ -48,6 +48,52 @@ are reused. This is an estimate, especially for small-quantity carrier parts.
 3mdeb's [shipping FAQ](https://3mdeb.com/faq-shop/) includes US deliveries; obtain
 the actual delivery charge at checkout. The Linux Automation mux is not the
 baseline because US delivery was unavailable in the user's checkout.
+
+## Procurement baseline — 2026-10-05
+
+The operator reports the SDWire, YKUSH3, Adafruit parts and remaining parts
+ordered. Receipt, quantities and assembly still need to be checked against the
+orders. Procurement does not constitute electrical qualification.
+
+The final adapter selection is **SparkFun BOB-00717**, Mouser
+[474-BOB-00717](https://www.mouser.com/c/?q=474-BOB-00717), quantity 10.
+It replaces the unavailable Adafruit #1230 assortment. Its footprint supports
+SOT-23-3; fit one BAT54S per board and use the purchased breakaway headers.
+Eight boards cover the eight possible ADC stages; two boards are spares.
+Follow the adapter pad mapping when wiring the three diode terminals.
+
+The remaining-parts order list was consolidated at Mouser:
+
+| Purchase qty | Mouser part number | Item |
+| --- | --- | --- |
+| 3 | 595-TMUX1511PWR | TSSOP-14 analog switches; two required |
+| 10 | 621-BAT54S-F | BAT54S-7-F clamp pairs |
+| 25 | 279-YR1B10KCC | 10 kOhm 0.1% axial divider resistors; 16 required |
+| 10 | 80-C315C102K5G | C315C102K5G5TA, 1 nF 50 V C0G radial capacitors |
+| 3 | 621-1N5817 | 1N5817-T controller power OR-ing diode; one required |
+| 10 | 474-BOB-00717 | Individual SOT-23 breakout boards |
+| 2 | 576-01500274Z | Inline 5 x 20 mm fuse holders |
+| 5 | 576-0218002.MXP | 2 A slow-blow commissioning fuse candidates |
+| 5 | 576-02183.15MXP | 3.15 A slow-blow commissioning fuse candidates |
+| 1 each | 548-WI-M-18-10-2 / 548-WI-M-18-10-0 | Red / black 18 AWG silicone wire, 10 ft each |
+| 6 | 485-578 | Four-pin plug/socket cable sets for signal harnesses |
+| 6 | 651-1715721 | Two-position 5.08 mm PCB screw terminals |
+| 5 each | 534-5000 / 534-5001 | Red / black probe test points |
+| 1 if absent from hub package | 562-3023005-01M | USB-A to USB 3 micro-B upstream cable |
+
+Use the precision 0.1% resistors for the dividers; the Adafruit 5% resistors
+are for pull-downs. Choose the fitted fuse ratings after measuring operating
+current and startup behavior. Use 18 AWG wiring for the main power branches.
+Confirm terminal pin fit on the carrier before assembly, and mechanically
+secure the probe attachments close to their measurement points.
+
+Cards and additional network hardware were conditional purchases: reuse
+suitable existing parts or verify them against the order receipts. The suggested
+Mouser options were 524-SDCE/32GB (two 32 GB microSD cards) and Tripp Lite
+U336-000-GB-AL (one USB Ethernet adapter if a dedicated host port is needed).
+The mounting plate can be printed; use the selected standoffs.
+
+Supplier stock counts and prices are intentionally not acceptance criteria.
 
 ## Mechanical arrangement
 
