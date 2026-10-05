@@ -18,6 +18,12 @@ Kaiba's first production target. The current image remains a development image.
 `nix build .#security-capabilities` exports source implementation status, not
 device evidence or a secure-boot claim.
 
+The [provisioning and qualification station design](station/README.md) describes
+an unattended Cora Z7-07S Rev B fixture using an Inland KS0212 relay board,
+SDWire, a Pico controller, a switchable USB hub and a Rigol DS1054Z. It includes
+wiring, a bill of materials, automation contracts and commissioning gates.
+It is a design, not implemented station software or physical qualification.
+
 Vivado 2026.1 exports the hardware release. The Nix builder consumes that
 release and does not need Vivado, Vitis, or an externally installed AMD tool.
 
