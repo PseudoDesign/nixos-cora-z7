@@ -14,7 +14,7 @@ Use two external low-voltage supplies on backed-up AC power:
   Positive goes through a harness fuse, relay 1 COM/NC and then Cora J15 center.
   Negative goes directly to Cora J15 sleeve/common ground.
 - `PSU-FIXTURE`: regulated nominal 5 V, 4 A, separate branches to KS0212 and
-  YKUSH3, and through a Schottky diode to Pico VSYS. YKUSH3 specifies **5.00–5.25 V**
+  YKUSH3, and through a Schottky diode to QT Py 5V pad. YKUSH3 specifies **5.00–5.25 V**
   at its external input; qualify actual loaded voltage and cable drop rather
   than relying on the supply's nominal label. [Y1]
 
@@ -23,14 +23,14 @@ from measured inrush, wire ampacity and supply current-limit behavior; 4 A is
 the PSU capacity, not an instruction to fit a 4 A fuse. Keep the power path short
 with 18–20 AWG wire and enclosed terminals. Do not switch the ground conductor.
 
-Pico external power: fixture +5 V to the **anode** of a 1N5817; cathode to VSYS
-(physical pin 39). Pico already has a USB-VBUS-to-VSYS diode. Follow the Pico
-datasheet's dual-supply arrangement, leaving its VBUS pin unconnected to the
-external supply. USB data connects directly to the host, outside YKUSH3. This
-lets controller power persist when host USB disappears. [P1]
+QT Py external power: fixture +5 V to the **anode** of a 1N5817; cathode to
+its **5V pad**. Leave the underside USB-host jumper **open**: its existing
+protection diode prevents external power feeding USB VBUS. Do not bridge that
+diode. USB-C data connects directly to the host, outside YKUSH3. This lets
+controller power persist when host USB disappears. [P1]
 
-Power the ADCs and analog switches from Pico's 3V3 output (pin 36). Common
-ground joins both supplies, Pico, relay input electronics, sense carrier and
+Power the ADCs and analog switches from the QT Py **3V pad**. Common
+ground joins both supplies, QT Py, relay input electronics, sense carrier and
 Cora. The Rigol's probe grounds are earth-referenced: all attach to DUT ground,
 never to a supply rail. Relay contacts themselves remain dry contacts.
 
@@ -64,15 +64,15 @@ before relying on it to hold the processor during USB enumeration. [C1]
 
 Use a keyed adapter with a **2 x 20 male header** mating to the KS0212 female
 socket. The table uses Raspberry Pi *physical header numbering*, not the
-Pico's physical pin order. Reference the connector mating face and pin-1 marker;
+QT Py's physical pin order. Reference the connector mating face and pin-1 marker;
 the underside view is mirrored. The manufacturer's BCM mapping is in [R2].
 
-| Function | Pico GPIO / physical pin | KS0212 physical pin / BCM | Contacts | GPIO low / de-energized | GPIO high / energized |
+| Function | QT Py pad / RP2040 GPIO | KS0212 physical pin / BCM | Contacts | GPIO low / de-energized | GPIO high / energized |
 | --- | --- | --- | --- | --- | --- |
-| `power_cut` | GP2 / 4 | 7 / BCM4 | R1 COM–NC in +5 V feed | DUT power connected | DUT power disconnected |
-| `boot_jtag` | GP3 / 5 | 15 / BCM22 | R2 COM–NC across JP2 | SD strap closed | JTAG strap open |
-| `reset_hold` | GP4 / 6 | 31 / BCM6 | R3 COM–NO across RESET | Released | Pressed |
-| `srst_hold` | GP5 / 7 | 37 / BCM26 | R4 COM–NO across SRST | Released | Pressed |
+| `power_cut` | A0 / GP29 | 7 / BCM4 | R1 COM–NC in +5 V feed | DUT power connected | DUT power disconnected |
+| `boot_jtag` | A1 / GP28 | 15 / BCM22 | R2 COM–NC across JP2 | SD strap closed | JTAG strap open |
+| `reset_hold` | A2 / GP27 | 31 / BCM6 | R3 COM–NO across RESET | Released | Pressed |
+| `srst_hold` | A3 / GP26 | 37 / BCM26 | R4 COM–NO across SRST | Released | Pressed |
 
 KS0212 receives fixture +5 V on the Pi power positions 2/4 and ground on position
 6 through the adapter. Before first power, verify these contacts against the
@@ -80,9 +80,9 @@ board's supply/ground planes and confirm channel order. The module is intended
 for Pi GPIO and its example indicates active-high inputs; verify this once with
 no DUT attached. Do not infer a complete input circuit from the relay-can label.
 
-Fit a 10 kOhm pull-down at each of the four relay inputs. Select Pico output
+Fit a 10 kOhm pull-down at each of the four relay inputs. Select QT Py output
 latches low *before* enabling the pins as outputs. Do not add pull-ups to Cora
-reset/strap nets or drive them from Pico GPIO; only the dry contacts touch them.
+reset/strap nets or drive them from QT Py GPIO; only the dry contacts touch them.
 
 The KS0212's large load ratings do not specify minimum reliable switching load.
 Acceptance includes repeated low-current RESET/SRST/JP2 operation and observed
@@ -98,7 +98,7 @@ during an irreversible job must not initiate a new power/reset sequence.
 
 | Connection | Host path | Startup policy |
 | --- | --- | --- |
-| Pico | Direct host USB | Always available; no USB-reset-on-close behavior |
+| QT Py | Direct host USB | Always available; no USB-reset-on-close behavior |
 | Cora JTAG/UART | YKUSH3 port 1 | Default OFF; enabled only by the lane owner |
 | SDWire reader/control | YKUSH3 port 2 | Default OFF; enabled during media operations |
 | Spare | YKUSH3 port 3 | OFF and unused |
@@ -129,7 +129,8 @@ qualify it at the actual SD clock with repeated full image readback and boot.
 ## Persistent rail sensing
 
 Two Adafruit ADS1115 #1085 breakouts provide eight slow telemetry channels.
-Power both at 3.3 V. Pico GP0/pin 1 = I2C0 SDA; GP1/pin 2 = I2C0 SCL.
+Power both at 3.3 V. QT Py edge pad SDA = GP24 (I2C0 SDA); SCL = GP25 (I2C0 SCL).
+These are separate from STEMMA QT (GP22/GP23, I2C1), which is unused. [P1, P2]
 Set U1 ADDR to GND (0x48), U2 ADDR to 3.3 V (0x49). Pull-ups must terminate at
 3.3 V; account for the breakouts' existing pull-ups before adding more. [A1, A2]
 
@@ -154,7 +155,7 @@ Prototype input stage, repeated for each used input:
    a prototype candidate. Account for leakage in calibration.
 
 Use two TMUX1511PWR devices (14-pin TSSOP), with suitable adapters if building on
-perfboard. Tie all SEL inputs to Pico GP6/pin 9 with a 10 kOhm pull-down. HIGH
+perfboard. Tie all SEL inputs to QT Py TX pad / GP20 with a 10 kOhm pull-down. HIGH
 connects sensing; LOW isolates it. The switches' powered-off protection applies
 up to 3.6 V on signal pins when VDD is zero; the divider limits a 5.5 V source to
 2.75 V. It prevents a still-powered DUT from feeding an unpowered ADC through
@@ -214,3 +215,20 @@ invent Rev B component-pad numbers from a B.1 schematic or an unreadable photo.
 BBRAM/VCCBATT retention and deliberate zeroization are outside this harness
 release until that board-specific circuit is traced. Electrical fault injection
 and temperature-corner qualification are also separate extensions.
+
+## Raspberry Pi 5 host ports as an alternative
+
+YKUSH3 is the selected baseline, not a requirement for that particular brand.
+An alternative must qualify independent Cora/SDWire power and data control.
+Pi 5 onboard USB VBUS is ganged across all four sockets. Turning any port on
+restores VBUS to all four; logical port disable is not proof of electrical
+isolation. Bus identifiers vary with the installed OS/hardware. [H1]
+
+A lower-cost shared-power variant is possible to investigate, but is not a
+qualified drop-in replacement. It must tolerate losing all USB devices together,
+use non-USB host storage/network for uninterrupted operation, and keep the
+externally powered QT Py controllable (for example with separately engineered
+3.3 V UART firmware/wiring). It must establish that powered SDWire access with
+Cora USB also powered does not back-feed the off DUT, and qualify data-path
+behavior and host-reboot defaults. If that state fails, independent switching
+is required. Do not enable this variant in the lane template before G1/G2 pass.

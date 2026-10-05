@@ -21,18 +21,17 @@ irreversible operations. It must not be treated as a commissioned lane.
 | Device under test (DUT) | Digilent Cora Z7-07S, PCB Rev B | Owned; variant/revision identified from photographs |
 | Relay board | Inland KS0212, Micro Center SKU 350892 | Owned; product listing identifies the Keyestudio part |
 | Oscilloscope | Rigol DS1054Z, Ethernet/SCPI | Owned; exact model/serial/firmware to record with `*IDN?` |
-| Fixture controller | Raspberry Pi Pico H, RP2040, USB CDC | Selected; independently powered |
+| Fixture controller | Adafruit QT Py RP2040, USB CDC | Owned; independently powered |
 | Boot-media mux | 3mdeb SDWire, micro-USB version | Selected; shipping to the US offered by supplier |
 | USB isolation | Yepkit YKUSH3 | Selected; separate switched ports for Cora and SDWire |
 | Rail telemetry | Two ADS1115 breakouts with protected sense carrier | Selected; supplements the scope |
 | Host | Existing Linux machine, preferably NixOS | Reuse; does not need to be the image builder |
 
-The Pico replaces the earlier Uno proposal: native USB avoids the usual
+The QT Py replaces the earlier Uno proposal: native USB avoids the usual
 USB-to-serial DTR reset circuit, and 3.3 V GPIO fits the relay board's intended
 Pi interface. Firmware must still explicitly disable any USB-triggered reset
-or bootloader entry. The Pico is a fixture controller, not the board being tested.
-Its 40-pin layout is **not** the Raspberry Pi computer header layout; an adapter
-is required. The earlier Uno and its 9 V supply are removed from the BOM.
+or bootloader entry. The QT Py is a fixture controller, not the board being tested.
+Its pads do not mate to the relay board: a wired header adapter is required. The earlier Uno and its 9 V supply are removed from the BOM.
 
 Retain the existing scope; do not buy another one for this lane. Keep the two
 ADCs for continuous rail/discharge checks while the scope captures transients.
@@ -51,7 +50,7 @@ ADC measurements alone do not establish power-sequence compliance.
 
 ```mermaid
 flowchart TD
-    H["Linux station host"] -->|"direct USB"| C["Pico fixture controller"]
+    H["Linux station host"] -->|"direct USB"| C["QT Py fixture controller"]
     H -->|"USB upstream"| U["YKUSH3"]
     U -->|"port 1: JTAG and UART"| D["Cora Z7-07S"]
     U -->|"port 2: control and reader"| M["SDWire"]
@@ -93,8 +92,8 @@ burning this board's fuses.
 
 | Event | Required behavior |
 | --- | --- |
-| Host process exits or USB connection disappears | Pico holds established outputs; never power-cycle from a heartbeat timeout |
-| Pico resets or loses its own power | Passive defaults connect DUT power, select SD, and release both reset contacts; report state unknown on return |
+| Host process exits or USB connection disappears | QT Py holds established outputs; never power-cycle from a heartbeat timeout |
+| QT Py resets or loses its own power | Passive defaults connect DUT power, select SD, and release both reset contacts; report state unknown on return |
 | Scope unavailable or an acquisition clips | No electrical qualification result; stop jobs that require this evidence |
 | SD writer or mux command fails | Do not boot the candidate; reconcile route and media before retrying an ordinary image write |
 | Fuse operation times out or host restarts | `UNCERTAIN`; keep available power, refuse destructive retries, reconcile explicitly |
@@ -127,7 +126,7 @@ target. See the [generic security boundary](../security/README.md).
 | Milestone | Deliverable | Acceptance |
 | --- | --- | --- |
 | M0 | Assemble harness, label identities, qualify relay defaults and sense paths | G0/G1 in qualification procedure |
-| M1 | Reproducible Pico firmware and read-only host inventory | No output transition on reconnect; accurate telemetry |
+| M1 | Reproducible QT Py firmware and read-only host inventory | No output transition on reconnect; accurate telemetry |
 | M2 | SDWire/YKUSH adapters, lane lock, image write/readback and UART capture | Recover repeatedly from a deliberately invalid image |
 | M3 | Rigol adapter, waveform analysis and evidence bundles | Repeated normal/abnormal power sequences with explainable results |
 | M4 | Signed boot/FIT/verity implementation and negative tests | Correct failure at each authenticated boundary |

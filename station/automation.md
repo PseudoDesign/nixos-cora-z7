@@ -6,7 +6,7 @@ policy and approval later; the controller never contacts a fleet service.
 
 ## Processes and authority
 
-Run one station service on the Linux host. It alone owns the Pico serial device,
+Run one station service on the Linux host. It alone owns the QT Py serial device,
 SDWire control interface/card block device, YKUSH HID, UART and JTAG interfaces,
 and the Rigol connection. Use persistent identities, restrictive device access,
 and an exclusive lock on the complete lane, not a separate lock per tool.
@@ -23,12 +23,12 @@ Disable routing/bridging between them. Bind services to the appropriate address,
 and firewall DUT access to host management, signers and scope. Test this with a
 deliberately untrusted DUT image.
 
-Package the host service and Pico firmware reproducibly through Nix in a later
+Package the host service and QT Py firmware reproducibly through Nix in a later
 implementation. Suggested adapter boundaries:
 
 | Adapter | Responsibilities |
 | --- | --- |
-| `fixture` | Pico identity/boot epoch, output states, rail telemetry and guarded sequencing |
+| `fixture` | QT Py identity/boot epoch, output states, rail telemetry and guarded sequencing |
 | `usb` | YKUSH identity, port state/readback and commissioned startup policy |
 | `media` | SDWire route, block-device correlation, write/flush/readback |
 | `console` | Stable UART identity, 115200 8N1, timestamped bounded capture |
@@ -64,7 +64,7 @@ read-only `hello`; it does not initialize outputs to a desired host state.
 | `provision_hold_status` | Read hold identity and any reset/fault event |
 | `provision_hold_release` | Explicit reconciliation and matching completed/aborted operation identity |
 
-The actual Pico cannot directly observe the USB mux/hub state; the host owns
+The actual QT Py cannot directly observe the USB mux/hub state; the host owns
 those checks. Firmware guards what it can measure and control, while the
 orchestrator enforces the whole-lane invariant. This is an operational interlock,
 not a tamper-proof boundary against a compromised trusted host.
@@ -73,7 +73,7 @@ Duplicate request IDs within an epoch return the previous result without
 repeating a transition. A changed boot epoch invalidates all prior sessions;
 the host never resends a state-changing command simply because it missed an
 ACK. Persist only infrequent hold transitions with a power-failure-tolerant
-journal; do not wear Pico flash by recording every sample or relay action.
+journal; do not wear QT Py flash by recording every sample or relay action.
 An unreadable hold journal requires reconciliation.
 
 On firmware startup, initialize the de-energized defaults described in hardware.md
@@ -141,7 +141,7 @@ intervals, trigger status, clipping and coverage before analyzing thresholds.
 Save raw samples/preambles, acquisition settings, computed measurements and a
 screenshot. A timeout, truncated trace, missing pre-trigger interval, disabled
 channel or borderline voltage/time margin is an invalid/inconclusive capture.
-The Pico's slow ADC readings cannot fill gaps in a transient waveform.
+The QT Py's slow ADC readings cannot fill gaps in a transient waveform.
 
 ## Irreversible transaction
 
@@ -157,7 +157,7 @@ transaction order:
 3. Prove the approved recovery path first. Verify power backup, stable rails,
    measurement readiness and any device temperature/voltage requirements from
    the operation's AMD documentation. Obtain protected inputs outside Nix.
-4. Write and durably sync intent before dispatch. Enter the Pico provision hold
+4. Write and durably sync intent before dispatch. Enter the QT Py provision hold
    and freeze other mutating adapters. Launch the operation exactly once.
 5. Persist a returned outcome and independently inspect permitted public
    postconditions. Do not assume secret fuse contents can be read back.

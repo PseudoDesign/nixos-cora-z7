@@ -18,30 +18,30 @@
     "jumpers": {"JP1": "open", "JP2": "relay_2_com_nc", "JP3": "EXT"}
   },
   "controller": {
-    "model": "raspberry-pi-pico-h-rp2040",
+    "model": "adafruit-qt-py-rp2040",
     "usb_identity": null,
     "firmware_sha256": null,
     "protocol_version": "1-draft",
     "host_loss_action": "hold_outputs",
     "boot_action": "deenergize_outputs_then_require_reconciliation",
     "usb_reset_on_dtr_or_baud_change": false,
-    "external_power": {"source": "fixture_5v", "diode": "1N5817", "pico_pin": 39}
+    "external_power": {"source": "fixture_5v", "diode": "1N5817", "controller_pad": "5V", "usb_host_jumper": "open"}
   },
   "relay_board": {
     "model": "inland-ks0212",
     "active_high_expected": true,
     "polarity_physically_verified": false,
     "outputs": [
-      {"name": "power_cut", "relay": 1, "pico_gpio": 2, "pico_pin": 4,
+      {"name": "power_cut", "relay": 1, "controller_gpio": 29, "controller_pad": "A0",
        "pi_header_pin": 7, "bcm_gpio": 4, "contact": "COM-NC",
        "reset_gpio_level": 0, "deenergized_effect": "dut_power_connected"},
-      {"name": "boot_jtag", "relay": 2, "pico_gpio": 3, "pico_pin": 5,
+      {"name": "boot_jtag", "relay": 2, "controller_gpio": 28, "controller_pad": "A1",
        "pi_header_pin": 15, "bcm_gpio": 22, "contact": "COM-NC",
        "reset_gpio_level": 0, "deenergized_effect": "sd_strap_closed"},
-      {"name": "reset_hold", "relay": 3, "pico_gpio": 4, "pico_pin": 6,
+      {"name": "reset_hold", "relay": 3, "controller_gpio": 27, "controller_pad": "A2",
        "pi_header_pin": 31, "bcm_gpio": 6, "contact": "COM-NO",
        "reset_gpio_level": 0, "deenergized_effect": "reset_released"},
-      {"name": "srst_hold", "relay": 4, "pico_gpio": 5, "pico_pin": 7,
+      {"name": "srst_hold", "relay": 4, "controller_gpio": 26, "controller_pad": "A3",
        "pi_header_pin": 37, "bcm_gpio": 26, "contact": "COM-NO",
        "reset_gpio_level": 0, "deenergized_effect": "srst_released"}
     ],
@@ -87,9 +87,9 @@
   },
   "telemetry": {
     "model": "ads1115",
-    "sda_pico_gpio": 0,
-    "scl_pico_gpio": 1,
-    "sense_enable_pico_gpio": 6,
+    "sda_controller_gpio": 24,
+    "scl_controller_gpio": 25,
+    "sense_enable_controller_gpio": 20,
     "powered_off_isolation": "two-tmux1511pwr",
     "supply_v": 3.3,
     "divider_nominal_ratio": 0.5,

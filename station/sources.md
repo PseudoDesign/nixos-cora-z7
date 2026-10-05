@@ -12,13 +12,14 @@ as manufacturer facts; a product specification alone does not qualify a fixture.
 | C2 | [Digilent Cora product/resource links](https://digilent.com/shop/cora-z7-zynq-7000-single-core-for-arm-fpga-soc-development/) | Part/variant and schematic entry point; matching Rev B schematic/pad map remains to be resolved |
 | R1 | [Micro Center Inland KS0212 listing](https://www.microcenter.com/product/643966/inland-rpi-4-channel-relay-5v-shield-for-raspberry-pi-ce-certification) | Manufacturer part KS0212, SKU 350892 |
 | R2 | [Keyestudio KS0212 documentation](https://docs.keyestudio.com/projects/KS0212/en/latest/docs/KS0212%20keyestudio%20RPI%204-channel%20Relay%20Shield.html) | 5 V supply, relay ratings, GPIO mapping and example code |
-| P1 | [Raspberry Pi Pico datasheet](https://datasheets.raspberrypi.com/pico/pico-datasheet.pdf) | VSYS/USB diode arrangement and Pico pinout |
-| P2 | [Raspberry Pi Pico documentation](https://www.raspberrypi.com/documentation/microcontrollers/pico-series.html) | Pico interfaces and hardware family |
+| P1 | [Adafruit QT Py RP2040 pinouts](https://learn.adafruit.com/adafruit-qt-py-2040/pinouts) | Power diode, USB-host jumper, pad functions and separate I2C buses |
+| P2 | [Adafruit board pin definitions](https://github.com/adafruit/circuitpython/blob/main/ports/raspberrypi/boards/adafruit_qtpy_rp2040/pins.c) | Exact pad-to-RP2040-GPIO mapping |
 | S1 | [3mdeb SDWire](https://shop.3mdeb.com/product/sdwire/) | USB card reader/control and microSD mux |
 | S2 | [Dasharo SDWire specification](https://docs.dasharo.com/transparent-validation/sd-wire/specification/) | Architecture; no integrated DUT power switch |
 | S3 | [3mdeb shipping FAQ](https://3mdeb.com/faq-shop/) | US shipping policy; freight/import costs remain checkout-dependent |
 | Y1 | [YKUSH3 v1.2.1 datasheet](https://www.yepkit.com/uploads/documents/9f39a_ykush3-datasheet.pdf) | External supply, connectors, power/data switching, control and default states |
 | Y2 | [YKUSH3 product page](https://www.yepkit.com/product/300110/YKUSH3) | Current board offering; supplied hardware/firmware revision must be recorded |
+| H1 | [uhubctl upstream documentation](https://github.com/mvp/uhubctl#raspberry-pi-5) | Pi 5 ganged USB power; topology-dependent bus identifiers |
 | A1 | [TI ADS1115 datasheet](https://www.ti.com/lit/ds/symlink/ads1115.pdf) | Supply/input limits, conversion timing, PGA and I2C addresses |
 | A2 | [Adafruit ADS1115 breakout #1085](https://www.adafruit.com/product/1085) | Selected ADC assembly |
 | A3 | [TI TMUX1511 datasheet](https://www.ti.com/lit/ds/symlink/tmux1511.pdf) | Powered-off protection, signal limits, active-high selects and TSSOP-14 package |

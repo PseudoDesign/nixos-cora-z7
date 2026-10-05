@@ -12,14 +12,14 @@ polarity, contact COM/NC/NO assignment, button net pairs and the relay's 5 V/GND
 connections. Record serials/USB topology and the physical pad/photo map for all
 sense wires. Do not reuse an unverified Rev B.1 pad map for this board.
 
-Verify supply regulation under load, Pico power OR-ing, fuse/wire selection,
+Verify supply regulation under load, QT Py power OR-ing, fuse/wire selection,
 common-ground connections and probe earth reference. Confirm JP3 EXT and JP1
 open. Record firmware and all jumpers. Label each removable harness connector.
 
 Before connecting a DUT signal, test controller startup, USB open/close, host
 disconnect, host reboot, watchdog reset and fixture-power removal with dummy
 loads. Check actual contact states against the proposed truth table. Confirm
-the host's USB reconnect does not reboot Pico firmware or pulse any relay.
+the host's USB reconnect does not reboot QT Py firmware or pulse any relay.
 
 **Pass:** recorded build matches the harness design; defaults and identities are
 unambiguous. Otherwise fix the harness/profile before connecting the target.
@@ -54,7 +54,7 @@ an off state for media switching; commission and periodically recheck both
 measurement paths. Do not claim comprehensive automatic open-wire detection.
 
 Prove SDWire host/DUT exclusivity and behavior after power loss/reset. Demonstrate
-that a Pico reset turning the DUT on during HOST routing does not connect the
+that a QT Py reset turning the DUT on during HOST routing does not connect the
 card to both masters. Test loss and restoration of hub power and upstream USB.
 
 **Pass:** a recorded media-write/off topology and a recorded boot topology both
