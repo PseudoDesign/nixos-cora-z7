@@ -1,0 +1,136 @@
+{
+  "format": "cora-qualification-lane-design",
+  "schema_version": "0.1.0-draft.1",
+  "record_kind": "uncommissioned_design_template",
+  "design_revision": "0.1",
+  "lane_id": "cora-lane-01",
+  "commissioned": false,
+  "allow_mutation": false,
+  "allow_irreversible_operations": false,
+  "target": {
+    "board": "digilent-cora-z7-07s",
+    "pcb_revision": "B",
+    "part": "xc7z007sclg400-1",
+    "physical_asset_id": null,
+    "observed_device_correlation": null,
+    "harness_revision": null,
+    "harness_record_sha256": null,
+    "jumpers": {"JP1": "open", "JP2": "relay_2_com_nc", "JP3": "EXT"}
+  },
+  "controller": {
+    "model": "adafruit-qt-py-rp2040",
+    "usb_identity": null,
+    "firmware_sha256": null,
+    "protocol_version": "1-draft",
+    "host_loss_action": "hold_outputs",
+    "boot_action": "deenergize_outputs_then_require_reconciliation",
+    "usb_reset_on_dtr_or_baud_change": false,
+    "external_power": {"source": "fixture_5v", "diode": "1N5817", "controller_pad": "5V", "usb_host_jumper": "open"}
+  },
+  "relay_board": {
+    "model": "inland-ks0212",
+    "active_high_expected": true,
+    "polarity_physically_verified": false,
+    "outputs": [
+      {"name": "power_cut", "relay": 1, "controller_gpio": 29, "controller_pad": "A0",
+       "pi_header_pin": 7, "bcm_gpio": 4, "contact": "COM-NC",
+       "reset_gpio_level": 0, "deenergized_effect": "dut_power_connected"},
+      {"name": "boot_jtag", "relay": 2, "controller_gpio": 28, "controller_pad": "A1",
+       "pi_header_pin": 15, "bcm_gpio": 22, "contact": "COM-NC",
+       "reset_gpio_level": 0, "deenergized_effect": "sd_strap_closed"},
+      {"name": "reset_hold", "relay": 3, "controller_gpio": 27, "controller_pad": "A2",
+       "pi_header_pin": 31, "bcm_gpio": 6, "contact": "COM-NO",
+       "reset_gpio_level": 0, "deenergized_effect": "reset_released"},
+      {"name": "srst_hold", "relay": 4, "controller_gpio": 26, "controller_pad": "A3",
+       "pi_header_pin": 37, "bcm_gpio": 26, "contact": "COM-NO",
+       "reset_gpio_level": 0, "deenergized_effect": "srst_released"}
+    ],
+    "qualified_settle_ms": null,
+    "qualified_reset_pulse_ms": null,
+    "qualified_shutdown_sequence": null
+  },
+  "usb_hub": {
+    "model": "yepkit-ykush3",
+    "serial": null,
+    "firmware_version": null,
+    "power_mode": "external",
+    "ports": [
+      {"port": 1, "role": "cora_jtag_uart", "power_on_default": "off"},
+      {"port": 2, "role": "sdwire", "power_on_default": "off"},
+      {"port": 3, "role": "unused", "power_on_default": "off"}
+    ],
+    "host_loss_behavior_qualified": false
+  },
+  "media": {
+    "model": "3mdeb-sdwire-micro-usb",
+    "mux_serial": null,
+    "reader_usb_identity": null,
+    "expected_card_capacity_bytes": null,
+    "qualified_boot_topology": null,
+    "qualified_write_topology": null,
+    "host_dut_exclusivity_verified": false,
+    "verify_written_byte_range_sha256": true,
+    "remaining_media_policy": null
+  },
+  "console": {"usb_identity": null, "interface": null, "baud": 115200,
+    "data_bits": 8, "parity": "none", "stop_bits": 1, "flow_control": "none",
+    "early_capture_topology": null},
+  "scope": {
+    "expected_model": "DS1054Z",
+    "observed_idn": null,
+    "resource": null,
+    "transport_candidate": "ethernet-vxi11-scpi",
+    "channels": {"1": "vccpint", "2": "vccpaux", "3": "vcco_mio0", "4": "ps_por_b"},
+    "probe_attenuation": null,
+    "acquisition_profile_sha256": null,
+    "calibration_record_sha256": null
+  },
+  "telemetry": {
+    "model": "ads1115",
+    "sda_controller_gpio": 24,
+    "scl_controller_gpio": 25,
+    "sense_enable_controller_gpio": 20,
+    "powered_off_isolation": "two-tmux1511pwr",
+    "supply_v": 3.3,
+    "divider_nominal_ratio": 0.5,
+    "conversion_rate_sps_candidate": 128,
+    "scan_rate_hz_candidate": 10,
+    "pga_full_scale_v_candidate": 4.096,
+    "calibration_record_sha256": null,
+    "channels": [
+      {"address": "0x48", "input": 0, "signal": "vccpint", "nominal_v": 1.0},
+      {"address": "0x48", "input": 1, "signal": "vccpaux", "nominal_v": 1.8},
+      {"address": "0x48", "input": 2, "signal": "vcco_mio0", "nominal_v": 3.3},
+      {"address": "0x48", "input": 3, "signal": "dut_vcc5v0", "nominal_v": 5.0},
+      {"address": "0x49", "input": 0, "signal": "ddr_supply", "nominal_v": 1.35},
+      {"address": "0x49", "input": 1, "signal": "fixture_5v", "nominal_v": 5.0},
+      {"address": "0x49", "input": 2, "signal": "dut_supply_upstream", "nominal_v": 5.0},
+      {"address": "0x49", "input": 3, "signal": "spare_grounded", "nominal_v": 0.0}
+    ]
+  },
+  "off_state_candidate": {
+    "qualified": false,
+    "signals": ["vccpint", "vccpaux", "vcco_mio0", "dut_vcc5v0", "ddr_supply"],
+    "below_v": 0.1,
+    "stable_ms": 1000,
+    "maximum_sample_age_ms": 200,
+    "independent_scope_confirmation_required": true,
+    "complete_open_wire_detection": false,
+    "is_amd_efuse_integrity_criterion": false
+  },
+  "network": {
+    "management_interface": null,
+    "dut_interface": null,
+    "scope_dhcp_reservation": null,
+    "dut_to_management_forwarding": false
+  },
+  "qualification": {
+    "G0_assembly_identity": "not_run",
+    "G1_measurement_isolation": "not_run",
+    "G2_control_recovery": "not_run",
+    "G3_power_sequences": "not_run",
+    "G4_authenticated_boot_storage": "not_implemented",
+    "G5_irreversible_operations": "not_implemented",
+    "approved_programming_profile_sha256": null
+  }
+}

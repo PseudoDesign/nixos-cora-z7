@@ -112,6 +112,11 @@ future capabilities rather than inventing guarantees in a capability manifest.
 
 ## Hardware operations and evidence boundary
 
+The [station design](../station/README.md) specifies the physical lane,
+interlocks, evidence capture and commissioning needed to exercise these
+interfaces. It keeps irreversible operations disabled until both the fixture
+and the relevant Zynq operation adapter are qualified.
+
 Keep read-only inspection separate from state-changing operations. The eventual
 low-level interface should describe an exact target-bound operation and its
 expected preconditions/postconditions. Fuse programming, debug lock changes and
